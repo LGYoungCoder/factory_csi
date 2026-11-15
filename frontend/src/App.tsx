@@ -1,3 +1,22 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import * as Tooltip from "@radix-ui/react-tooltip";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import WorkspacePage from "@/pages/WorkspacePage";
+import ReportPage from "@/pages/ReportPage";
+
+const qc = new QueryClient({ defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false, staleTime: 5_000 } } });
+
 export default function App() {
-  return <div className="min-h-screen bg-slate-950 text-slate-100 p-6">Factory CSI</div>;
+  return (
+    <QueryClientProvider client={qc}>
+      <Tooltip.Provider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<WorkspacePage />} />
+            <Route path="/cases/:id/report" element={<ReportPage />} />
+          </Routes>
+        </BrowserRouter>
+      </Tooltip.Provider>
+    </QueryClientProvider>
+  );
 }

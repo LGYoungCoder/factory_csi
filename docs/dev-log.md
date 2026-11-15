@@ -36,3 +36,10 @@ Real entries only, appended at the end of each phase.
   - ds-02: PROCESS_PARAMETER_DEVIATION rose to HIGH after the ST-20 config audit (MISMATCH).
   - ds-03: final INSUFFICIENT_EVIDENCE (MIX and PROCESS tied at MEDIUM; EOL-B reference UNAVAILABLE).
 - Tests: 19 deterministic backend/API tests (~7 s) plus 4 `llm` tests on the real DeepSeek API (A, B, C with reject_all, immediate conclude), all passing in 4.5 min.
+
+## 2026-11-16 – Phase 6: Investigation workspace UI
+- React 19 + TS + Tailwind v4 + Radix primitives (shadcn style) + ECharts + TanStack Query + react-markdown (rehype-slug + rehype-sanitize).
+- Live state: the case snapshot from REST is the source of truth. A pure SSE reducer tracks progress, warnings and audit, and triggers debounced snapshot refetches. The SSE client reconnects with backoff and resumes from the last seq.
+- ESLint (React 19 hook rules) caught two real issues: `setState` inside an effect (fixed by keying `DecisionPanel` on the proposal round) and a ref written during render in the SSE hook.
+- Verified with headless Chrome screenshots against the live backend (`docs/screenshots/`): workspace after a completed Scenario A case, the Next Best Verification panel while awaiting approval, and the report view. Headless Chrome with `--virtual-time-budget` hangs while an SSE stream is open, so screenshots of running cases use `--timeout`.
+- 8 Vitest tests (reducer, formatting, status mapping, decision panel validation, LLM-unavailable disabling). tsc and ESLint are clean.
