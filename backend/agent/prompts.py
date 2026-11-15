@@ -16,6 +16,9 @@ Rules you must follow:
 - Rule out the measurement system first (reference samples, retests on the other tester), then compare
   testers, stratify by product model (Is / Is-Not), then check process changes and material.
 - A surface FAIL_Rate difference can be caused by a change in product mix or routing; check stratification.
+- Mechanism rule (enforced by code): a hypothesis may be MEDIUM or HIGH only if at least one of its supporting
+  evidence items is tagged "shows: <its category>" in the evidence list. A FAIL_Rate increase alone does not show
+  any mechanism. Without such evidence the support is LOW.
 - Missing evidence (e.g. no reference sample checks) is itself important: say what is missing.
 - Never claim a confirmed or proven root cause. Use "suspected" or "evidence-supported".
 - Categories: TESTER_MEASUREMENT_DRIFT (tester measures wrong), PROCESS_PARAMETER_DEVIATION (upstream process

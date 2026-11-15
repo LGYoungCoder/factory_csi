@@ -9,11 +9,11 @@
 - [x] 3. Containerization
   - Add the backend and frontend Dockerfiles, the nginx config with SSE passthrough, the entrypoint that generates datasets, and docker-compose with healthcheck.
   - _Requirements: 10, 11_
-- [ ] 4. Evaluation harness
+- [x] 4. Evaluation harness
   - `python -m evaluation`: N runs per scenario, auto-approve rank-1, metrics, results JSON and docs/evaluation.md.
   - _Requirements: 12, 13, 14_
 - [x] 5. Documentation
   - README, docs/architecture.md, demo-script, submission draft, dev-log, KIRO_USAGE.md.
   - _Requirements: 15, 16, 17_
-- [ ] 6. Pre-submission checker, clean-clone check, optional CI, tooling tests
+- [x] 6. Pre-submission checker, clean-clone check, optional CI, tooling tests
   - _Requirements: 18, 19, 20_

@@ -13,6 +13,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from backend.api.app import create_app
+from backend.evidence.models import overclaims
 from backend.settings import Settings
 from simulator.config import DEFAULT_CONFIG
 from simulator.generator import generate
@@ -75,7 +76,7 @@ def check_common(c: TestClient, d: dict) -> None:
     for i in range(1, 11):
         assert f"## {i}." in md
     assert set(re.findall(r"EV-\d{3}", md)) <= ids
-    assert "confirmed root cause" not in md.lower()
+    assert overclaims(md) is None
 
 
 def test_scenario_a_tester_drift(env) -> None:  # noqa: ANN001

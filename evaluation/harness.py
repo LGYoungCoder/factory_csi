@@ -19,7 +19,7 @@ from fastapi.testclient import TestClient
 
 from backend.agent.report import SECTIONS
 from backend.api.app import create_app
-from backend.evidence.models import BANNED_RE
+from backend.evidence.models import overclaims
 from backend.settings import Settings
 from simulator.config import DEFAULT_CONFIG
 from simulator.generator import generate
@@ -87,12 +87,14 @@ def score(d: dict, events: list[dict], md: str, gt: GroundTruth, duration: float
     dropped = sum(len(e["payload"].get("invalid_ids", [])) for e in events if e["type"] == "citation_dropped")
     accepted = sum(len(e["payload"].get("proposals", [])) for e in events if e["type"] == "awaiting_approval")
     rejected = sum(1 for e in events if e["type"] == "proposal_rejected_by_validator")
-    matches, updated = [], []
+    matches, updated, incorporated = [], [], []
+    cited_final = {x for h in d["hypotheses"] for x in h["supporting_evidence"] + h["contradicting_evidence"]}
     for v in d["verifications"]:
         ev = ev_by_id.get(v["evidence_id"])
         if ev:
             matches.append(_verification_match(v, ev, gt))
         updated.append(any(v["evidence_id"] in j["because"] for j in d["judgment_changes"]))
+        incorporated.append(v["evidence_id"] in cited_final)
     m = [x for x in matches if x is not None]
     sections_ok = all(f"## {i}. {s}" in md for i, s in enumerate(SECTIONS, 1))
     return {
@@ -108,7 +110,8 @@ def score(d: dict, events: list[dict], md: str, gt: GroundTruth, duration: float
         "verification_types": [v["type"] for v in d["verifications"]],
         "verification_outcome_match": round(sum(m) / len(m), 4) if m else None,
         "state_updated_rate": round(sum(updated) / len(updated), 4) if updated else None,
-        "report_complete": sections_ok and set(EV.findall(md)) <= set(ev_by_id) and not BANNED_RE.search(md),
+        "verification_incorporated_rate": round(sum(incorporated) / len(incorporated), 4) if incorporated else None,
+        "report_complete": sections_ok and set(EV.findall(md)) <= set(ev_by_id) and not overclaims(md),
         "duration_s": round(duration, 1),
         "llm_calls": d["budgets"]["llm_calls"]["used"],
         "mcp_calls": d["budgets"]["mcp_calls"]["used"],
@@ -150,11 +153,11 @@ def run(datasets: list[str], runs: int, workdir: Path, timeout: float = 900, log
 def summarize(res: dict) -> dict:
     out = {}
     for ds, rows in res["results"].items():
-        def rate(key: str) -> str:
+        def rate(key: str, rows: list = rows) -> str:
             vals = [r[key] for r in rows if r[key] is not None]
             return f"{sum(1 for v in vals if v is True)}/{len(vals)}" if vals and isinstance(vals[0], bool) else "n/a"
 
-        def mean(key: str) -> float | None:
+        def mean(key: str, rows: list = rows) -> float | None:
             vals = [r[key] for r in rows if r[key] is not None]
             return round(statistics.mean(vals), 3) if vals else None
         out[ds] = {
@@ -167,6 +170,7 @@ def summarize(res: dict) -> dict:
             "proposal_legality_mean": mean("proposal_legality"),
             "verification_outcome_match_mean": mean("verification_outcome_match"),
             "state_updated_rate_mean": mean("state_updated_rate"),
+            "verification_incorporated_mean": mean("verification_incorporated_rate"),
             "duration_s_mean": mean("duration_s"),
             "duration_s_median": round(statistics.median([r["duration_s"] for r in rows]), 1),
             "llm_calls_mean": mean("llm_calls"),
@@ -191,7 +195,8 @@ def markdown(res: dict, summary: dict) -> str:
             ("Citation validity (mean)", "citation_validity_mean"), ("Dropped citations (total)", "dropped_citations_total"),
             ("Proposal legality (mean)", "proposal_legality_mean"),
             ("Verification outcome = ground truth (mean, comparable checks)", "verification_outcome_match_mean"),
-            ("Verification evidence cited in a judgment change (mean)", "state_updated_rate_mean"),
+            ("Verification evidence cited by the final hypotheses (mean)", "verification_incorporated_mean"),
+            ("Verification that changed a support level, citing it (mean)", "state_updated_rate_mean"),
             ("Duration s (mean / median)", None), ("LLM calls (mean)", "llm_calls_mean"),
             ("MCP calls (mean)", "mcp_calls_mean"), ("Cost USD (mean, LiteLLM estimate)", "cost_usd_mean")]
     for name, key in rows:

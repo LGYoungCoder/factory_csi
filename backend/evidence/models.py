@@ -13,8 +13,18 @@ Support = Literal["HIGH", "MEDIUM", "LOW", "INSUFFICIENT"]
 VType = Literal["cross_retest", "reference_sample_check", "process_config_check"]
 SUPPORT_RANK = {"INSUFFICIENT": 0, "LOW": 1, "MEDIUM": 2, "HIGH": 3}
 EV_RE = re.compile(r"\bEV-\d{3,}\b")
-BANNED = ("confirmed root cause", "root cause is", "proven", "definitely", "certainly caused")
+BANNED = ("confirmed root cause", "the root cause is", "root cause has been identified", "proven", "definitely",
+          "certainly caused")
 BANNED_RE = re.compile(r"\b(" + "|".join(re.escape(b) for b in BANNED) + r")\b", re.I)
+_NEGATION = re.compile(r"\b(not|no|never|nor|without|cannot|isn't|is not|un)\b[\w\s,-]{0,25}$", re.I)
+
+
+def overclaims(text: str) -> str | None:
+    """Return the first overclaiming phrase that is not negated (e.g. 'not a proven cause' is allowed)."""
+    for m in BANNED_RE.finditer(text or ""):
+        if not _NEGATION.search(text[max(0, m.start() - 40):m.start()]):
+            return m.group(0)
+    return None
 
 
 class _M(BaseModel):
@@ -122,7 +132,7 @@ def hypothesis_errors(hs: HypothesisSet, known: set[str]) -> list[str]:
         both = set(h.supporting_evidence) & set(h.contradicting_evidence)
         if both:
             errs.append(f"{h.category}: {sorted(both)} cannot be both supporting and contradicting")
-        if BANNED_RE.search(h.statement + " " + (h.change_rationale or "")):
+        if overclaims(h.statement + " " + (h.change_rationale or "")):
             errs.append(f"{h.category}: avoid overclaiming phrases {list(BANNED)}")
     return errs
 
@@ -149,6 +159,12 @@ def apply_guardrails(hs: HypothesisSet, evidence: dict[str, dict]) -> tuple[list
                                                                      "to": "INSUFFICIENT",
                                                                      "reason": "no valid supporting evidence"}})
             d["support"] = "INSUFFICIENT"
+        mech = [e for e in d["supporting_evidence"] if h.category in evidence[e].get("data", {}).get("mechanism", [])]
+        if SUPPORT_RANK[d["support"]] >= SUPPORT_RANK["MEDIUM"] and not mech:
+            events.append({"type": "support_downgraded", "payload": {
+                "hypothesis_id": h.category, "from": d["support"], "to": "LOW",
+                "reason": "no supporting evidence shows this mechanism directly"}})
+            d["support"] = "LOW"
         if d["support"] == "HIGH" and not any(evidence[e]["kind"] == "verification" for e in d["supporting_evidence"]):
             events.append({"type": "support_downgraded", "payload": {"hypothesis_id": h.category, "from": "HIGH",
                                                                      "to": "MEDIUM",

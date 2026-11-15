@@ -54,3 +54,12 @@ Real entries only, appended at the end of each phase.
   - Fix: close once a `completed` was seen and the case is terminal. The API test now reproduces the real event order.
 - LiteLLM fetched a remote price map at import (TLS EOF behind the dev network, about 10 s delay). It is now pinned to the bundled map with `LITELLM_LOCAL_MODEL_COST_MAP=True`.
 - Added README, KIRO_USAGE.md, demo script, Devpost draft, `make check-submission` (18 checks, all PASS), clean-clone script and an optional GitHub Actions workflow.
+
+## 2026-11-16 – Evaluation-driven fixes
+- First full `make eval` (3 runs per scenario): A 3/3, B 3/3 and C 2/3 acceptable. In the failing C run the LLM put PROCESS_PARAMETER_DEVIATION at MEDIUM using only the FAIL_Rate increase as support.
+  - Fix (code, not prompt-only): every finding and verification now carries `data.mechanism` tags. Examples: a reference check out of tolerance or a retest PASS on the other tester → tester drift; a recorded program change with a KS-significant parameter shift → process deviation; within-model tester parity plus a mix shift → product mix shift.
+  - Guardrail: a hypothesis can reach MEDIUM or higher only if some supporting evidence shows its mechanism. The tags are shown to the LLM in the evidence digest.
+- The report check flagged "No single root cause is established" (pattern "root cause is") and "not a proven root cause". Both are hedges, not overclaims, so a negation-aware `overclaims()` replaces the raw regex in validation, tests and evaluation.
+- Added the metric "verification evidence cited by the final hypotheses" next to "verification that changed a support level". The latter is low when a verification confirms an already HIGH hypothesis, which is expected.
+- Final `make eval` (deepseek-flash, 9 runs): all completed; anomaly detection, conclusion acceptability and report completeness 9/9; citation validity 1.0; proposal legality 1.0; verification outcomes match ground truth 1.0; about 55–85 s and about US$0.011–0.013 per case. Scenario C concludes "suspected product mix shift, MEDIUM", which the answer key allows (≤ MEDIUM).
+- Docker backend rebuilt with these fixes; stack healthy on :8080.

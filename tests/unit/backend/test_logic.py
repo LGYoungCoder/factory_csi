@@ -87,19 +87,33 @@ def _hs(support: str, sup: list[str], cat: str = "TESTER_MEASUREMENT_DRIFT") -> 
 
 
 def test_guardrails() -> None:
-    ev = {"EV-001": {"kind": "statistic"}, "EV-002": {"kind": "verification"}}
+    mech = {"mechanism": ["TESTER_MEASUREMENT_DRIFT"]}
+    ev = {"EV-001": {"kind": "statistic", "data": mech}, "EV-002": {"kind": "verification", "data": mech},
+          "EV-003": {"kind": "statistic", "data": {"mechanism": []}}}
     assert hypothesis_errors(_hs("LOW", ["EV-009"]), set(ev)) != []
     hyps, events = apply_guardrails(_hs("HIGH", ["EV-001"]), ev)
     assert hyps[0]["support"] == "MEDIUM" and events[0]["type"] == "support_downgraded"
+    hyps, events = apply_guardrails(_hs("MEDIUM", ["EV-003"]), ev)  # no evidence shows the mechanism
+    assert hyps[0]["support"] == "LOW" and "mechanism" in events[0]["payload"]["reason"]
+    hyps, _ = apply_guardrails(_hs("MEDIUM", ["EV-001"], "PROCESS_PARAMETER_DEVIATION"), ev)
+    assert hyps[0]["support"] == "LOW"
     hyps, _ = apply_guardrails(_hs("HIGH", ["EV-001", "EV-002"]), ev)
     assert hyps[0]["support"] == "HIGH"
     hyps, events = apply_guardrails(_hs("MEDIUM", ["EV-404"]), ev)
     assert hyps[0]["support"] == "INSUFFICIENT" and {e["type"] for e in events} == {"citation_dropped",
                                                                                     "support_downgraded"}
     banned = HypothesisSet.model_validate({"hypotheses": [{
-        "category": "PRODUCT_MIX_SHIFT", "title": "t", "statement": "This is the confirmed root cause EV-001",
+        "category": "PRODUCT_MIX_SHIFT", "title": "t", "statement": "The root cause is mix EV-001",
         "support": "LOW"}]})
     assert any("overclaiming" in e for e in hypothesis_errors(banned, set(ev)))
+    hedged = HypothesisSet.model_validate({"hypotheses": [{
+        "category": "PRODUCT_MIX_SHIFT", "title": "t", "statement": "No single root cause is established EV-001",
+        "support": "LOW"}]})
+    assert hypothesis_errors(hedged, set(ev)) == []
+    from backend.evidence.models import overclaims
+    assert overclaims("This is evidence-supported, not a proven root cause.") is None
+    assert overclaims("It is proven that EOL-B drifts.") == "proven"
+    assert overclaims("The root cause is the tester.") == "The root cause is"
 
 
 def test_conclusion_rule_and_judgment_diff() -> None:

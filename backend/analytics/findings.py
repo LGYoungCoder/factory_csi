@@ -32,6 +32,8 @@ class Finding:
     mcp_call_ids: list[str] = field(default_factory=list)
     ts: str | None = None  # timeline position
     equipment: list[str] = field(default_factory=list)
+    #: hypothesis categories whose physical mechanism this finding directly shows (see guardrails)
+    mechanism: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -156,7 +158,8 @@ def reference_findings(checks_by_tester: dict[str, dict], windows: Windows, call
             f"deviation {last['deviation']:+.4f} V ({last['result']}).",
             {"tester_id": t, "count": len(checks), "out_of_tolerance": len(fails), "slope_v_per_h": sig4(slope),
              "slope_p": sig4(p), "last_deviation": last["deviation"], "last_result": last["result"],
-             "last_ts": last["ts"]}, refs, rows, cid, (fails[0]["ts"] if fails else None), [t]))
+             "last_ts": last["ts"]}, refs, rows, cid, (fails[0]["ts"] if fails else None), [t],
+            ["TESTER_MEASUREMENT_DRIFT"] if fails or (slope is not None and slope > 0 and (p or 1) < 0.01) else []))
         gap_h = (end - parse_ts(last["ts"])).total_seconds() / 3600
         if gap_h > 2:
             out.append(Finding(
@@ -180,7 +183,8 @@ def retest_findings(full: dict, call_id: str) -> list[Finding]:
     return [Finding("retests", "record", "EOL", "Historical retests",
                     f"{rs['test_count']} historical retests: {paths}.", {"by_path": rs["by_path"]}, refs, rows,
                     [call_id], rs["retests"][0]["ts"] if rs["retests"] else None,
-                    sorted({r["tester_id"] for r in rs["retests"]}))]
+                    sorted({r["tester_id"] for r in rs["retests"]}),
+                    ["TESTER_MEASUREMENT_DRIFT"] if any(p["pass_count"] > 0 for p in rs["by_path"]) else [])]
 
 
 # --- tester comparison and stratification -------------------------------------------------
@@ -211,7 +215,8 @@ def comparison_findings(baseline: dict, detection: dict, call_ids: list[str]) ->
         f"Within each model (last {DETECTION_HOURS} h): {parts}. "
         + ("A tester difference remains within at least one model." if sig_any
            else "No significant tester difference within any model."),
-        {"strata": strata, "difference_within_model": sig_any}, [], [], call_ids, None, list(TESTERS)))
+        {"strata": strata, "difference_within_model": sig_any}, [], [], call_ids, None, list(TESTERS),
+        ["TESTER_MEASUREMENT_DRIFT"] if sig_any else ["PRODUCT_MIX_SHIFT"]))
     # model mix shift baseline vs detection, overall and per tester
     def share_b(summary: dict, tester: str | None) -> tuple[int, int]:
         rows = [r for r in summary["by_tester_model"] if tester is None or r["tester_id"] == tester]
@@ -231,7 +236,8 @@ def comparison_findings(baseline: dict, detection: dict, call_ids: list[str]) ->
             f"{k}: {pct(v['baseline_share_b'])} → {pct(v['window_share_b'])} (p={fmt_p(v['p_value'])})"
             for k, v in mix.items()) + (". The model mix changed significantly." if shifted
                                         else ". No significant model mix change."),
-        {"mix": mix, "shifted": shifted}, [], [], call_ids, None, list(TESTERS)))
+        {"mix": mix, "shifted": shifted}, [], [], call_ids, None, list(TESTERS),
+        ["PRODUCT_MIX_SHIFT"] if shifted else []))
     return out
 
 
@@ -261,7 +267,8 @@ def process_findings(changes: dict, st20: dict, windows: Windows, call_ids: dict
             + (". Distribution shift detected." if shifted else ". No significant shift."),
             {"parameters": res, "shifted": shifted}, [f"process_measurements:{m['meas_id']}" for m in sample],
             [{"ref": f"process_measurements:{m['meas_id']}", "sn": m["sn"], "equipment_id": "ST-20", "ts": m["ts"],
-              "program_version": m["program_version"]} for m in sample], [call_ids["st20"]], None, ["ST-20"]))
+              "program_version": m["program_version"]} for m in sample], [call_ids["st20"]], None, ["ST-20"],
+            ["PROCESS_PARAMETER_DEVIATION"] if shifted else []))
         return out
     for ch in changes["changes"]:
         ref = f"process_changes:{ch['change_id']}"
@@ -270,7 +277,7 @@ def process_findings(changes: dict, st20: dict, windows: Windows, call_ids: dict
             f"{ch['ts']}: {ch['equipment_id']} {ch['change_type']} changed from {ch['old_value']} to "
             f"{ch['new_value']} by {ch['changed_by']}.", dict(ch), [ref],
             [{"ref": ref, "equipment_id": ch["equipment_id"], "ts": ch["ts"], "program_version": ch["new_value"]}],
-            [call_ids["changes"]], ch["ts"], [ch["equipment_id"]]))
+            [call_ids["changes"]], ch["ts"], [ch["equipment_id"]], ["PROCESS_PARAMETER_DEVIATION"]))
         if ch["equipment_id"] == "ST-20" and meas:
             res = {}
             for param in ("angle", "torque"):
@@ -292,7 +299,7 @@ def process_findings(changes: dict, st20: dict, windows: Windows, call_ids: dict
                 [ref] + [f"process_measurements:{m['meas_id']}" for m in after],
                 [{"ref": f"process_measurements:{m['meas_id']}", "sn": m["sn"], "equipment_id": "ST-20",
                   "ts": m["ts"], "program_version": m["program_version"]} for m in after],
-                [call_ids["st20"]], ch["ts"], ["ST-20"]))
+                [call_ids["st20"]], ch["ts"], ["ST-20"], ["PROCESS_PARAMETER_DEVIATION"] if shifted else []))
         if before_after and ch["change_id"] in before_after:
             pre, post = before_after[ch["change_id"]]
             rows = []
@@ -309,7 +316,9 @@ def process_findings(changes: dict, st20: dict, windows: Windows, call_ids: dict
                     f"{r['tester_id']} {pct(r['before']['fail_rate'])} → {pct(r['after']['fail_rate'])} "
                     f"(p={fmt_p(r['p_value'])})" for r in rows) + ".",
                 {"change_id": ch["change_id"], "by_tester": rows}, [ref] + refs, rrows,
-                [call_ids.get("before", ""), call_ids.get("after", "")], ch["ts"], list(TESTERS) + ["ST-20"]))
+                [call_ids.get("before", ""), call_ids.get("after", "")], ch["ts"], list(TESTERS) + ["ST-20"],
+                ["PROCESS_PARAMETER_DEVIATION"] if all((r["p_value"] or 1) < 0.01 and (r["after"]["fail_rate"] or 0) >
+                                                       (r["before"]["fail_rate"] or 0) for r in rows) else []))
     return out
 
 
@@ -323,7 +332,8 @@ def material_findings(traces: dict, call_id: str) -> list[Finding]:
                     f"{len(tr)} sampled failed products come from {len(lots)} material lots; the most frequent lot "
                     f"{top} accounts for {n} ({pct(n / len(tr))}). Descriptive only (sample of failures).",
                     {"lots": dict(lots.most_common())}, [f"products:{t['sn']}" for t in tr[:20]],
-                    [{"ref": f"products:{t['sn']}", "sn": t["sn"]} for t in tr[:20]], [call_id])]
+                    [{"ref": f"products:{t['sn']}", "sn": t["sn"]} for t in tr[:20]], [call_id], None, [],
+                    ["MATERIAL_LOT_ISSUE"] if n / len(tr) >= 0.5 else [])]
 
 
 def event_findings(events_by_eq: dict[str, dict], call_ids: dict[str, str]) -> list[Finding]:

@@ -17,7 +17,6 @@ from backend.agent import prompts
 from backend.agent.report import build_report, render_markdown
 from backend.analytics import findings as F
 from backend.evidence.models import (
-    BANNED_RE,
     SUPPORT_RANK,
     ConclusionDraft,
     HypothesisSet,
@@ -29,6 +28,7 @@ from backend.evidence.models import (
     decide_conclusion,
     hypothesis_errors,
     judgment_changes,
+    overclaims,
 )
 from backend.llm.client import (
     BudgetExhaustedError,
@@ -203,7 +203,8 @@ class InvestigationEngine:
     async def _register(self, rt: CaseRuntime, f: F.Finding) -> dict:
         def make(eid: str) -> dict:
             return {"id": eid, "case_id": rt.case_id, "kind": f.kind, "source_system": f.source_system,
-                    "title": f.title, "summary": f.summary, "data": {**f.data, "ref_rows": f.ref_rows},
+                    "title": f.title, "summary": f.summary,
+                    "data": {**f.data, "ref_rows": f.ref_rows, "mechanism": f.mechanism},
                     "record_refs": f.record_refs[:50], "mcp_call_ids": [c for c in f.mcp_call_ids if c],
                     "ts": f.ts, "equipment": f.equipment, "created_at": _now()}
         item, new = await self.store.add_evidence(rt.case_id, f.key, make)
@@ -217,7 +218,9 @@ class InvestigationEngine:
         ev = sorted(evidence, key=lambda e: (order.get(e["kind"], 5), e["id"]))
         lines, size = [], 0
         for e in ev:
-            line = f"{e['id']} [{e['kind']}|{e['source_system']}] {e['title']}: {e['summary']}"
+            mech = e.get("data", {}).get("mechanism") or []
+            tag = f" [shows: {', '.join(mech)}]" if mech else ""
+            line = f"{e['id']} [{e['kind']}|{e['source_system']}]{tag} {e['title']}: {e['summary']}"
             if size + len(line) > self.s.evidence_payload_max_chars:
                 lines.append(f"... {len(ev) - len(lines)} more evidence items omitted for length")
                 break
@@ -625,6 +628,14 @@ class InvestigationEngine:
             return {"rounds": rnd, "last_verification": []}
         outs = body["outcomes"]
         unavailable = any(o["outcome"] == "UNAVAILABLE" for o in outs)
+        kinds = [o["outcome"] for o in outs]
+        mech: list[str] = []
+        if prop["verification_type"] == "cross_retest" and kinds.count("PASS") > len(kinds) / 2:
+            mech = ["TESTER_MEASUREMENT_DRIFT"]
+        elif "OUT_OF_TOLERANCE" in kinds:
+            mech = ["TESTER_MEASUREMENT_DRIFT"]
+        elif "MISMATCH" in kinds:
+            mech = ["PROCESS_PARAMETER_DEVIATION"]
         f = F.Finding(
             f"verification:{approval_id}", "absence" if unavailable else "verification", "VERIFICATION",
             f"Simulated {prop['verification_type'].replace('_', ' ')} ({body['target']})", body["summary"],
@@ -635,7 +646,7 @@ class InvestigationEngine:
             [{"ref": f"eol_tests:{o['test_id']}", "sn": o["sn"], "tester_id": o["retest_tester_id"],
               "ts": body["simulated_ts"], "result": o["outcome"], "is_retest": True}
              for o in outs if o.get("test_id")],
-            [body["call_id"]], body["simulated_ts"], [body["target"]])
+            [body["call_id"]], body["simulated_ts"], [body["target"]], mech)
         item = await self._register(rt, f)
         await rt.emit("verification_executed", {"proposal_id": prop["proposal_id"], "approval_id": approval_id,
                                                 "verification_id": body["verification_id"],
@@ -699,7 +710,7 @@ class InvestigationEngine:
             bad = (set(c.cited_evidence) | cited_ids(c.statement)) - known
             if bad:
                 errs.append(f"unknown evidence ids {sorted(bad)}")
-            if BANNED_RE.search(c.statement):
+            if overclaims(c.statement):
                 errs.append("avoid overclaiming phrases such as 'confirmed root cause' or 'proven'")
             return errs
 
@@ -744,7 +755,7 @@ class InvestigationEngine:
                     bad = cited_ids(text) - known
                     if bad:
                         errs.append(f"unknown evidence ids {sorted(bad)}")
-                    if BANNED_RE.search(text):
+                    if overclaims(text):
                         errs.append("avoid overclaiming phrases such as 'confirmed root cause' or 'proven'")
                     return errs
                 try:
