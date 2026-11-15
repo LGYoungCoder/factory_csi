@@ -22,3 +22,17 @@ Real entries only, appended at the end of each phase.
 - Verification engine (the only world-state reader): simulated clock `data end + 10 min × k`, noise seeded by SHA-256(seed, k, type, target), no-flip rule, batch append in one transaction, idempotency ledger under `logs/mcp/verifications/` with a file lock. A ledger entry stops applying once its created rows disappear (dataset reset).
 - 11 integration tests (~7 s): real stdio transport, SQL parity of `get_eol_summary`, structured errors, verification outcomes against ground truth for ds-01/02/03, idempotency, reproducibility after reset, and an audit-hook test proving `ground_truth.json` is never opened and `world_state.json` is read only during verification.
 - Bug found by the tests: ds-02's affected set (all P-2.4 products) includes passing products. The retest test now picks failed affected SNs.
+
+## 2026-11-15 – Phase 4/5: Investigation engine, verification loop, API
+- Probed LiteLLM 1.109 + DeepSeek before writing the LLM layer: JSON mode, tool calling and `thinking={"type":"disabled"}` all work. A JSON call takes about 1 s; `completion_cost` reports cost.
+- Probed LangGraph 1.2 `interrupt()` / `Command(resume=…)` with `AsyncSqliteSaver` in a 3-node script before building the real graph.
+- Implemented: deterministic analytics (MSA first: reference-sample trend and gaps, historical retests, tester comparison, model stratification, mix shift, process change KS/MWU, before/after FAIL_Rate, material lots, events), the evidence registry in app.db (idempotent by finding key), guardrails (HIGH requires verification evidence; no valid citations → INSUFFICIENT; banned phrases), an 11-node StateGraph, the proposal validator, judgment diff, the conclusion rule, a 10-section report, and a FastAPI layer with SSE, decisions, retry, restart recovery and dashboards served only through MCP.
+- Bugs found in the first real runs:
+  - Pydantic request models defined inside `create_app()` were treated as query params, so we moved them to module level.
+  - The LangGraph node wrapper was a sync lambda returning a coroutine (`InvalidUpdateError`), so we replaced it with an async factory.
+  - DeepSeek wrote a 900+ character conclusion, which hit the schema limit, and the case went to FAILED_LLM. This exercised the retry path: after a server restart, `POST /retry` resumed at `finalize_conclusion` from the checkpoint and completed. Fix: text limits are generous and the prompt gives word guidance; list limits truncate instead of failing.
+- Real runs (auto-approve rank 1, about 60–90 s and about $0.012–0.016 per case with deepseek-flash):
+  - ds-01: TESTER_MEASUREMENT_DRIFT rose to HIGH after the cross retest (5/5 PASS on EOL-A).
+  - ds-02: PROCESS_PARAMETER_DEVIATION rose to HIGH after the ST-20 config audit (MISMATCH).
+  - ds-03: final INSUFFICIENT_EVIDENCE (MIX and PROCESS tied at MEDIUM; EOL-B reference UNAVAILABLE).
+- Tests: 19 deterministic backend/API tests (~7 s) plus 4 `llm` tests on the real DeepSeek API (A, B, C with reject_all, immediate conclude), all passing in 4.5 min.
