@@ -265,14 +265,26 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
         async def gen() -> AsyncIterator[str]:
             cursor = start
+            seen_completed = False
             while True:
                 batch = await sv.store.events_after(case_id, cursor)
                 for e in batch:
                     cursor = e["seq"]
+                    seen_completed = seen_completed or e["type"] == "completed"
                     data = json.dumps({**e["payload"], "_seq": e["seq"], "_ts": e["created_at"]})
                     yield f"id: {e['seq']}\nevent: {e['type']}\ndata: {data}\n\n"
-                if batch and batch[-1]["type"] == "completed":
-                    return
+                if seen_completed:
+                    # `completed` may be followed by trailing node events; close once the case is terminal
+                    # (a completed replayed from before a retry does not close the stream)
+                    case = await sv.store.get_case(case_id)
+                    if case and case["status"] in ("COMPLETED", "FAILED", "FAILED_LLM"):
+                        await asyncio.sleep(0.2)
+                        for e in await sv.store.events_after(case_id, cursor):
+                            cursor = e["seq"]
+                            data = json.dumps({**e["payload"], "_seq": e["seq"], "_ts": e["created_at"]})
+                            yield f"id: {e['seq']}\nevent: {e['type']}\ndata: {data}\n\n"
+                        return
+                    seen_completed = False
                 if await request.is_disconnected():
                     return
                 if not batch:

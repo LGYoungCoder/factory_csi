@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import re
 import time
 from collections.abc import Awaitable, Callable
@@ -11,9 +12,11 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
-import litellm
+os.environ.setdefault("LITELLM_LOCAL_MODEL_COST_MAP", "True")  # use bundled price map, no network fetch at import
 
-from backend.settings import Settings
+import litellm  # noqa: E402
+
+from backend.settings import Settings  # noqa: E402
 from factory_data.timeutil import format_ts
 
 litellm.suppress_debug_info = True

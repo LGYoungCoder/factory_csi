@@ -1,0 +1,14 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  fast:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: uv sync
+      - run: cd frontend && npm ci
+      - run: make test-fast
+      - run: bash scripts/hooks/secret_guard.sh --all

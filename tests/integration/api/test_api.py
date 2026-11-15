@@ -88,18 +88,19 @@ def test_sse_replay_and_decision_conflict(client: TestClient) -> None:
         case = await store.create_case("ds-00")
         cid = case["case_id"]
         await store.update_case(cid, status="COMPLETED")
+        # real engine order: `completed` is followed by the report node's node_completed event
         for t, p in (("status_changed", {"from": "CREATED", "to": "RUNNING"}), ("node_started", {"node": "x"}),
-                     ("completed", {"final_status": "COMPLETED"})):
+                     ("completed", {"final_status": "COMPLETED"}), ("node_completed", {"node": "generate_report"})):
             await store.append_event(cid, t, p)
         return cid
 
     cid = client.portal.call(seed)
-    text = client.get(f"/api/cases/{cid}/events").text
-    assert text.count("event: ") == 3 and "id: 3" in text
+    text = client.get(f"/api/cases/{cid}/events").text  # must terminate
+    assert text.count("event: ") == 4 and "id: 4" in text
     text = client.get(f"/api/cases/{cid}/events", headers={"Last-Event-ID": "2"}).text
-    assert text.count("event: ") == 1 and "event: completed" in text
+    assert text.count("event: ") == 2 and "event: completed" in text
     d = client.get(f"/api/cases/{cid}").json()
-    assert d["last_event_seq"] == 3 and d["budgets"]["mcp_calls"]["limit"] == 20
+    assert d["last_event_seq"] == 4 and d["budgets"]["mcp_calls"]["limit"] == 20
     r = client.post(f"/api/cases/{cid}/decision", json={"action": "conclude"})
     assert r.status_code == 409 and r.json()["error"]["code"] == "CONFLICT"
     assert client.post(f"/api/cases/{cid}/retry").status_code == 409

@@ -1,0 +1,42 @@
+# Local demo: http://localhost:8080 (bound to 127.0.0.1 – the app has no login and spends LLM credits)
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+      args:
+        UV_DEFAULT_INDEX: ${UV_DEFAULT_INDEX:-https://pypi.org/simple}
+        PYTHON_IMAGE: ${PYTHON_IMAGE:-python:3.11-slim}
+    env_file: .env
+    environment:
+      DATA_DIR: /app/data
+      APP_DB_PATH: /app/var/app.db
+      CHECKPOINT_DB_PATH: /app/var/checkpoints.db
+      LOG_DIR: /app/logs
+      HOST: 0.0.0.0
+      CORS_ORIGINS: http://localhost:8080
+    volumes:
+      - csi-data:/app/data
+      - csi-var:/app/var
+      - csi-logs:/app/logs
+    ports:
+      - "127.0.0.1:8000:8000"
+    restart: unless-stopped
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+      args:
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmjs.org/}
+        NODE_IMAGE: ${NODE_IMAGE:-node:22-alpine}
+        NGINX_IMAGE: ${NGINX_IMAGE:-nginx:1.27-alpine}
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8080:80"
+    restart: unless-stopped
+volumes:
+  csi-data:
+  csi-var:
+  csi-logs:

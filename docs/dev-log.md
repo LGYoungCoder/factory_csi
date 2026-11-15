@@ -43,3 +43,14 @@ Real entries only, appended at the end of each phase.
 - ESLint (React 19 hook rules) caught two real issues: `setState` inside an effect (fixed by keying `DecisionPanel` on the proposal round) and a ref written during render in the SSE hook.
 - Verified with headless Chrome screenshots against the live backend (`docs/screenshots/`): workspace after a completed Scenario A case, the Next Best Verification panel while awaiting approval, and the report view. Headless Chrome with `--virtual-time-budget` hangs while an SSE stream is open, so screenshots of running cases use `--timeout`.
 - 8 Vitest tests (reducer, formatting, status mapping, decision panel validation, LLM-unavailable disabling). tsc and ESLint are clean.
+
+## 2026-11-16 – Phase 7: Delivery
+- Docker:
+  - Backend image (python 3.11-slim + uv, non-root, entrypoint generates missing datasets) and frontend image (node build → nginx with `proxy_buffering off` for SSE). Compose binds both services to 127.0.0.1.
+  - Docker Hub dropped connections from the dev machine, so base images and package indexes are now build args/env vars. The images were built through public mirrors.
+  - `docker compose up` was verified end to end: health check, LLM OK, SPA routes, SSE through nginx (123 events replayed), and a full Scenario A investigation through port 8080 (COMPLETED, Tester drift MEDIUM→HIGH).
+- Evaluation harness (`python -m evaluation`) runs in-process with an isolated `var/eval/` and is scored against the ground truth.
+  - The first eval run hung after the first case. The SSE stream only closed when `completed` was the last event, but the engine emits `node_completed` after `completed`.
+  - Fix: close once a `completed` was seen and the case is terminal. The API test now reproduces the real event order.
+- LiteLLM fetched a remote price map at import (TLS EOF behind the dev network, about 10 s delay). It is now pinned to the bundled map with `LITELLM_LOCAL_MODEL_COST_MAP=True`.
+- Added README, KIRO_USAGE.md, demo script, Devpost draft, `make check-submission` (18 checks, all PASS), clean-clone script and an optional GitHub Actions workflow.
