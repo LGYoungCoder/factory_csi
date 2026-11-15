@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Python tests on save",
+      "trigger": "PostFileSave",
+      "description": "Runs ruff on the saved Python file and the related deterministic pytest suite (pytest -m \"not llm\"). Output in logs/hooks/python-tests-on-save.log.",
+      "matcher": "\\.py$",
+      "action": {
+        "type": "command",
+        "command": "bash scripts/hooks/run_related_tests.sh",
+        "timeout": 120
+      }
+    }
+  ]
+}

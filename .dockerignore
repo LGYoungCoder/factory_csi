@@ -1,0 +1,14 @@
+.env
+.git/
+data/
+var/
+logs/
+node_modules/
+frontend/node_modules/
+frontend/dist/
+.venv/
+tests/
+evaluation/results/
+.pytest_cache/
+.ruff_cache/
+.hypothesis/

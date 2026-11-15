@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "industrial-mcp-ds-00": { "command": "uv", "args": ["run", "python", "-m", "industrial_mcp", "--dataset", "ds-00", "--data-dir", "data"], "disabled": false, "autoApprove": [] },
+    "industrial-mcp-ds-01": { "command": "uv", "args": ["run", "python", "-m", "industrial_mcp", "--dataset", "ds-01", "--data-dir", "data"], "disabled": false, "autoApprove": [] },
+    "industrial-mcp-ds-02": { "command": "uv", "args": ["run", "python", "-m", "industrial_mcp", "--dataset", "ds-02", "--data-dir", "data"], "disabled": false, "autoApprove": [] },
+    "industrial-mcp-ds-03": { "command": "uv", "args": ["run", "python", "-m", "industrial_mcp", "--dataset", "ds-03", "--data-dir", "data"], "disabled": false, "autoApprove": [] }
+  }
+}

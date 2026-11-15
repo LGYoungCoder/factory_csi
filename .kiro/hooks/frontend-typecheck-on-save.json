@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Frontend typecheck on save",
+      "trigger": "PostFileSave",
+      "description": "Runs tsc for the frontend and eslint on the saved file. Output in logs/hooks/frontend-typecheck-on-save.log.",
+      "matcher": "frontend/.*\\.(ts|tsx)$",
+      "action": {
+        "type": "command",
+        "command": "bash scripts/hooks/frontend_check.sh",
+        "timeout": 120
+      }
+    }
+  ]
+}
