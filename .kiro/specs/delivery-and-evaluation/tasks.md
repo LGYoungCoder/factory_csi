@@ -1,9 +1,9 @@
 # Implementation Plan
 
-- [ ] 1. Repository foundation
+- [x] 1. Repository foundation
   - Add the root pyproject (uv, ruff, pytest `llm` marker, import-linter contracts), Makefile, .gitignore, .env.example, the MIT LICENSE, placeholder packages and a frontend scaffold.
   - _Requirements: 1, 2, 3, 4, 5_
-- [ ] 2. Kiro steering, hooks and dev MCP config
+- [x] 2. Kiro steering, hooks and dev MCP config
   - Add the steering files, the three hook JSON files plus scripts (related tests, frontend check, secret guard) and `.kiro/settings/mcp.json`.
   - _Requirements: 6, 7, 8, 9_
 - [ ] 3. Containerization
