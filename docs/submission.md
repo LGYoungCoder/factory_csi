@@ -11,7 +11,7 @@ Use the English text for the form. The Chinese version is for reference and loca
 
 ---
 
-## Elevator pitch (≤ 200 characters)
+# Elevator pitch (≤ 200 characters)
 
 **EN (193 characters):**
 
@@ -23,7 +23,9 @@ Use the English text for the form. The Chinese version is for reference and loca
 
 ---
 
-## Project Story – English (paste into "About the project")
+# Project Story – English
+
+_Copy everything from "## Inspiration" to the end of "## What's next for FactoryCSI" into the "About the project" field._
 
 ## Inspiration
 
@@ -75,7 +77,12 @@ Factory CSI investigates an EOL quality anomaly on a fictional production line (
   - a LangGraph node wrapper that returned a coroutine;
   - an over-long LLM answer that tested our retry-from-checkpoint path for us.
 
-## Accomplishments
+## Accomplishments that we're proud of
+
+- **The full loop works end to end with a real LLM:** anomaly → MCP evidence → hypotheses → next best verification → human approval → simulated check → judgment change → traceable report.
+- **The agent cannot cheat.** The answer key and hidden physics are isolated by import contracts and an audit-hook test, so the agent only knows what the MCP tools return.
+- **It knows when to say "not enough evidence".** In Scenario C it never claims a tester or process cause with high support.
+- **One command to run:** `make docker-up`. The UI is in English and Chinese.
 
 On 3 scenarios × 3 runs with the real DeepSeek API, scored against the hidden answer key:
 - anomaly detection 9/9;
@@ -93,15 +100,17 @@ The test suite has 66 deterministic tests, 11 frontend tests and 4 real-LLM test
 - The most useful thing an assistant can say is often *"run this check next, and here is what each result would mean"*, not *"the root cause is X"*.
 - Writing requirements first, including measurable acceptance criteria for the simulator, turned "make the demo convincing" into tests we could actually run.
 
-## What's next
+## What's next for FactoryCSI
 
 Connect real MES / QMS / test systems through MCP, add more failure modes (fixture wear, firmware changes, material lots), produce AI output in Chinese with matching guardrails, and add authentication for a hosted demo.
 
 ---
 
-## 项目故事 – 中文版（参考用）
+# 项目故事 – 中文版（参考用）
 
-## 灵感来源
+_与英文版相同的 7 个章节，标题保留英文以便对照。_
+
+## Inspiration（灵感来源）
 
 在汽车零部件工厂，EOL 下线测试是产品出厂前的最后一道关卡。当某台测试设备的不良率突然从约 2% 涨到约 18% 时，质量工程师必须尽快判断：产品真的坏了，还是测试设备测不准了，又或者只是这台设备上测的产品型号变了？
 
@@ -109,7 +118,7 @@ Connect real MES / QMS / test systems through MCP, add more failure modes (fixtu
 
 多数"制造业 AI"演示止步于"解释可能发生了什么"。我们想做的助手还要说清**下一步该查什么**，等工程师批准后再执行，并在**证据变化时修正自己的判断**。
 
-## 它做什么
+## What it does（它做什么）
 
 Factory CSI 在一条虚构的产线（Alpha 工厂 A 线：ST-10 → ST-20 → ST-30 → EOL-A / EOL-B）上调查 EOL 质量异常：
 
@@ -121,7 +130,7 @@ Factory CSI 在一条虚构的产线（Alpha 工厂 A 线：ST-10 → ST-20 → 
 5. **人工确认**。工程师可以批准、全部拒绝（需写理由）或结束调查。批准的验证在模拟器中执行并返回新证据，AI 随后记录明确的判断变化，例如"测试设备漂移：中 → 高，依据 EV-019"。
 6. **输出 10 个章节的可追溯报告**，包括时间线、证据、执行过的验证、判断变化和疑似受影响的产品范围。报告只使用"疑似"或"有证据支持"的措辞，从不写"已确认根因"。
 
-## 如何构建
+## How we built it（如何构建）
 
 - **用 Kiro 做规格驱动开发**。我们写了 7 个 Spec，共 144 条 EARS 需求，并在写代码前做了一次跨 Spec 一致性检查。这次检查发现了真实的冲突：例如场景 C 的信号太弱，我们自己的检测规则根本触发不了；又如 LLM 调用上限设为 25 次时，最坏情况下只够跑一轮验证。Steering 文件记录关键规则：禁止兜底文本、标准答案隔离、引用规则。三个 Hook 分别在保存 Python 文件时跑相关测试和 ruff，在保存前端文件时跑 tsc 和 eslint，在每次保存时扫描密钥。同一个 MCP 服务也注册给了 Kiro 的开发 Agent 使用。
 - **带隐藏真值的模拟器**。用固定随机种子为每个场景生成三份数据：
@@ -141,7 +150,7 @@ Factory CSI 在一条虚构的产线（Alpha 工厂 A 线：ST-10 → ST-20 → 
   - LLM 失败时案件暂停，可从检查点恢复，系统从不显示预设文本。
 - **应用**：FastAPI 加 Server-Sent Events，React + TypeScript + ECharts 工作台（中英文界面），Docker Compose 一键启动。
 
-## 遇到的挑战
+## Challenges we ran into（遇到的挑战）
 
 - **刻意设计"模糊性"**。每个场景既要能被统计方法发现，又必须靠验证才能判断。场景 C 表面上像测试设备的问题，实际是型号构成变化，加上标准样件缺失。为此我们设计了"不翻转"规则（测量噪声不会改变 $z_{\text{true}} + b$ 的合格判定），并用 Spec 中的验收标准去搜索合适的随机种子。
 - **让 LLM 保持诚实**。第一次完整评测中，场景 C 有一次仅凭不良率上升就给出了"工艺偏差：中"。我们在代码层面修复：每个发现都带有机理标签，支持度达到"中"或以上必须有对应机理的证据。修复后 9 次评测全部得到可接受的结论。
@@ -151,7 +160,12 @@ Factory CSI 在一条虚构的产线（Alpha 工厂 A 线：ST-10 → ST-20 → 
   - LangGraph 节点包装函数返回了协程；
   - LLM 一次回答过长，正好让我们验证了"从检查点重试"这条路径。
 
-## 取得的成果
+## Accomplishments that we're proud of（引以为豪的成果）
+
+- **完整闭环在真实 LLM 上跑通**：异常 → MCP 取证 → 假设 → 下一步最佳验证 → 人工批准 → 模拟验证 → 判断变化 → 可追溯报告。
+- **Agent 无法作弊**：标准答案和隐藏的物理真值由 import 隔离规则和审计钩子测试隔离，Agent 只知道 MCP 工具返回的内容。
+- **懂得说"证据不足"**：在场景 C 中，它从不以高支持度断定是测试设备或工艺的问题。
+- **一条命令即可运行**：`make docker-up`，界面支持中英文。
 
 用真实 DeepSeek API 跑 3 个场景各 3 次，对照隐藏的标准答案评分：
 - 异常检测 9/9；
@@ -163,12 +177,12 @@ Factory CSI 在一条虚构的产线（Alpha 工厂 A 线：ST-10 → ST-20 → 
 
 测试方面有 66 个确定性测试、11 个前端测试和 4 个真实 LLM 测试。这只是一个小型合成基准，不代表生产级的准确率。
 
-## 学到了什么
+## What we learned（学到了什么）
 
 - 让**代码负责计算、模型负责解释**，是工业 AI Agent 可审计的关键。
 - 助手最有价值的一句话往往是"下一步做这项检查，每种结果分别意味着什么"，而不是"根因就是 X"。
 - 先写需求，包括模拟器的可度量验收标准，把"让演示看起来可信"变成了可以真正运行的测试。
 
-## 下一步
+## What's next for FactoryCSI（FactoryCSI 的下一步）
 
 通过 MCP 接入真实的 MES、QMS 和测试系统，增加更多失效模式（夹具磨损、固件变更、物料批次），支持中文 AI 输出并配套相应的护栏，为在线演示加上身份认证。
