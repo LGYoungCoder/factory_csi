@@ -1,7 +1,7 @@
 # Demo video script (≤ 175 s)
 
 Setup before recording:
-- `make docker-up`; open http://localhost:8080; LLM indicator green.
+- `make docker-up`; open http://localhost:18473; LLM indicator green.
 - Select **Scenario A – EOL Tester Drift** and press **Reset dataset**.
 - Browser at 1600×1000 with zoom 100 %.
 

@@ -58,8 +58,10 @@ Each scenario is generated from a fixed seed (about 800 products, one 8-hour shi
 ```bash
 cp .env.example .env          # put your LLM key into LLM_API_KEY (DeepSeek by default)
 make docker-up                # = docker compose up --build
-open http://localhost:8080
+open http://localhost:18473
 ```
+
+The web port defaults to **18473**; set `CSI_WEB_PORT` (in the shell or `.env`) to use another one.
 
 The backend generates the four datasets on first start. Without a key the app still runs: overview and statistics work, and AI investigation is disabled.
 

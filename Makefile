@@ -44,7 +44,7 @@ dev-backend: ## Run backend with reload (long-running, own terminal)
 dev-frontend: ## Run Vite dev server on :5173 (long-running, own terminal)
 	cd frontend && npm run dev
 
-docker-up: ## Build and start the Docker Compose stack on http://localhost:8080
+docker-up: ## Build and start the Docker Compose stack on http://localhost:18473
 	@test -f .env || { echo "Missing .env – run: cp .env.example .env"; exit 1; }
 	docker compose up --build
 

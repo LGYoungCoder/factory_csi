@@ -1,4 +1,4 @@
-# Local demo: http://localhost:8080 (bound to 127.0.0.1 – the app has no login and spends LLM credits)
+# Local demo: http://localhost:18473 (override with CSI_WEB_PORT; bound to 127.0.0.1 – the app has no login and spends LLM credits)
 services:
   backend:
     build:
@@ -14,7 +14,7 @@ services:
       CHECKPOINT_DB_PATH: /app/var/checkpoints.db
       LOG_DIR: /app/logs
       HOST: 0.0.0.0
-      CORS_ORIGINS: http://localhost:8080
+      CORS_ORIGINS: http://localhost:${CSI_WEB_PORT:-18473}
     volumes:
       - csi-data:/app/data
       - csi-var:/app/var
@@ -34,7 +34,7 @@ services:
       backend:
         condition: service_healthy
     ports:
-      - "127.0.0.1:8080:80"
+      - "127.0.0.1:${CSI_WEB_PORT:-18473}:80"
     restart: unless-stopped
 volumes:
   csi-data:

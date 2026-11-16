@@ -14,7 +14,7 @@ Out of scope:
 - The backend API, investigation engine, MCP server, simulator, nginx configuration and Docker Compose setup (separate specs).
 
 Assumptions:
-- The Workspace_UI uses only the endpoints listed in the investigation-api spec, all under the API base path `/api`. In development, the Vite dev server proxies `/api` to `http://127.0.0.1:8000`. In the Docker Compose demo, nginx serves the built SPA at `http://localhost:8080`, proxies `/api` and falls back to `index.html` for client-side routes.
+- The Workspace_UI uses only the endpoints listed in the investigation-api spec, all under the API base path `/api`. In development, the Vite dev server proxies `/api` to `http://127.0.0.1:8000`. In the Docker Compose demo, nginx serves the built SPA at `http://localhost:18473`, proxies `/api` and falls back to `index.html` for client-side routes.
 - The case status model is defined by the verification-loop spec. An Active_Case is a case whose status is CREATED, RUNNING, AWAITING_APPROVAL or CONCLUDING; FAILED_LLM is not an Active_Case status. The backend remains authoritative: the Workspace_UI shows the backend 409 message when its local view is stale.
 - The Case_Snapshot returned by `GET /api/cases/{id}` includes `last_event_seq`, the highest persisted event sequence number reflected in it, as defined in the investigation-api spec (Requirement 14 criteria 3 and 7). The Event_Stream_Client uses it to resume the event stream without duplicates or gaps.
 - The event types and payloads are those of the Case_Event_Catalog owned by the investigation-api spec. The event stream closes after the `completed` event and stays open while the case is AWAITING_APPROVAL.
@@ -26,7 +26,7 @@ Assumptions:
 Dependencies:
 - investigation-api spec: REST endpoints, the SSE event stream `GET /api/cases/{id}/events`, the Case_Event_Catalog, `last_event_seq`, the decision payload rules, the Error_Body format and the case, evidence, hypothesis, proposal, judgment change and report payloads.
 - investigation-engine and verification-loop specs: case statuses, budgets per case (20 MCP calls, 40 LLM calls, 3 verification rounds, 2 reject_all decisions) and the report structure.
-- delivery-and-evaluation spec: nginx static serving with SPA fallback and the Docker Compose demo at `http://localhost:8080`.
+- delivery-and-evaluation spec: nginx static serving with SPA fallback and the Docker Compose demo at `http://localhost:18473`.
 
 ## Glossary
 

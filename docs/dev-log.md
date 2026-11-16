@@ -69,3 +69,6 @@ Real entries only, appended at the end of each phase.
 - Scenario labels, descriptions and equipment-status reason codes from the API are translated in the UI. AI-generated text and the report body stay English, because the overclaim and citation guardrails are tuned for English.
 - A Vitest test scans every component and page for literal `t("…")` keys and fails on any key missing from the Chinese dictionary. It now has 11 frontend tests.
 - Pushed the repository to GitHub. The remote's initial commit (MIT LICENSE, copyright "KIffer") was merged without force-pushing, and its LICENSE was kept.
+
+## 2026-11-16 – Web port
+- On user request, moved the Docker Compose web UI from 8080 to the less common port 18473. It can be overridden with `CSI_WEB_PORT` in the shell or `.env`, and the backend CORS origin follows the same variable. Specs, README, Makefile, architecture and demo script were updated; earlier log entries keep the old port as history. The stack was verified on http://localhost:18473, and 8080 is no longer bound.

@@ -23,7 +23,7 @@ Out of scope:
 Assumptions:
 - The LICENSE copyright holder is "Liu Gan" and the copyright year is 2026.
 - Raw evaluation results (`evaluation/results/<timestamp>.json`) are git-ignored. Only `evaluation/results/latest-summary.json` and `docs/evaluation.md` are committed, so the repository shows the latest evaluation without accumulating raw run data.
-- The Frontend_Image is published on `127.0.0.1:8080` and the Backend_Image on `127.0.0.1:8000`, because the MVP has no authentication and calls a paid LLM. Binding to a public interface is part of the deferred deployment.
+- The Frontend_Image is published on `127.0.0.1:18473` and the Backend_Image on `127.0.0.1:8000`, because the MVP has no authentication and calls a paid LLM. Binding to a public interface is part of the deferred deployment.
 - The JSON that Kiro passes on STDIN to a PostFileSave command hook contains the saved file path. The exact field name is confirmed against the Kiro hook documentation during implementation. Every Hook_Script also accepts the path as its first command-line argument, for manual runs and tests.
 - Kiro may not surface the output of a PostFileSave command hook. Each Hook_Script therefore writes its full output to `logs/hooks/<hook-name>.log` and prints a one-line summary (Requirement 7 criterion 10), so results stay visible if Kiro does not show them.
 - The per-Case investigation budgets are 40 LLM calls (not 25) and 20 MCP tool calls, as enforced by the investigation-engine spec. The Evaluation_Harness and the documentation use these values.
@@ -280,11 +280,11 @@ Dependencies:
 #### Acceptance Criteria
 
 1. THE Compose_Stack SHALL define exactly two services, `backend` (Backend_Image) and `frontend` (Frontend_Image), each with `restart: unless-stopped`.
-2. THE Compose_Stack SHALL publish the frontend service on `127.0.0.1:8080` (container port 80), and SHALL publish the backend service only on `127.0.0.1:8000`.
+2. THE Compose_Stack SHALL publish the frontend service on `127.0.0.1:18473` (container port 80), and SHALL publish the backend service only on `127.0.0.1:8000`.
 3. THE Compose_Stack SHALL load `.env` into the backend service with `env_file`, and SHALL set in the backend service environment HOST `0.0.0.0`, PORT `8000`, DATA_DIR `/app/data`, APP_DB_PATH `/app/var/app.db`, CHECKPOINT_DB_PATH `/app/var/checkpoints.db` and LOG_DIR `/app/logs`, which take precedence over `.env`.
 4. THE Compose_Stack SHALL mount three named volumes on the backend service at `/app/data`, `/app/var` and `/app/logs`, so that Datasets, the App_DB and logs survive container recreation.
 5. THE Compose_Stack SHALL define a backend healthcheck that requests `http://127.0.0.1:8000/api/health` using the Python standard library, with a start period of at least 120 seconds to cover first-start Dataset generation, and the frontend service SHALL depend on the backend service with condition `service_healthy`.
-6. WHEN a user runs `docker compose up --build` in a clean clone with a `.env` that contains a valid LLM key, THE Compose_Stack SHALL serve a working app at `http://localhost:8080` on which the Scenario A demo path of the Demo_Script can be completed.
+6. WHEN a user runs `docker compose up --build` in a clean clone with a `.env` that contains a valid LLM key, THE Compose_Stack SHALL serve a working app at `http://localhost:18473` on which the Scenario A demo path of the Demo_Script can be completed.
 7. WHEN a user runs `docker compose up --build` with a `.env` whose LLM_API_KEY is empty, THE Compose_Stack SHALL start both services, the UI SHALL show the LLM as unavailable with investigation disabled, and the scenario list and Dataset overview SHALL work.
 8. THE Compose_Stack SHALL define no service, port or setting that requires a public host name, so that a later deployment can add HTTPS and a public bind address without changing the images.
 
@@ -348,7 +348,7 @@ Dependencies:
 2. THE What It Does section SHALL describe the three innovations: cross-system manufacturing forensics, evidence-grounded investigation and next best verification with human approval.
 3. THE Architecture section SHALL contain a Mermaid diagram of the frontend, backend API, investigation graph, LLM provider via LiteLLM, MCP client, Industrial_MCP_Server and simulated factory data, and a list of these components with one sentence each, and SHALL link to the Architecture_Doc.
 4. THE Screenshots section SHALL contain real screenshots of the running app committed under `docs/images/` before submission, and SHALL contain no mock-up presented as a screenshot.
-5. THE Quick Start (Docker) section SHALL list the steps `cp .env.example .env`, setting LLM_API_KEY, `docker compose up --build` and opening `http://localhost:8080`, and SHALL state what the app shows without a key.
+5. THE Quick Start (Docker) section SHALL list the steps `cp .env.example .env`, setting LLM_API_KEY, `docker compose up --build` and opening `http://localhost:18473`, and SHALL state what the app shows without a key.
 6. THE Local Development section SHALL list `make setup`, `make seed`, `make dev-backend` and `make dev-frontend` in separate terminals, the required tool versions, and the dev-time MCP note of Requirement 9 criterion 3.
 7. THE Configuring the LLM section SHALL explain the LLM settings, the LiteLLM model string format, how to switch between the providers listed in Requirement 5 criterion 4, and that no fallback mode exists.
 8. THE Scenarios section SHALL contain a table with Dataset_ID, Scenario_Registry label and Scenario_Registry description for the four Datasets, and SHALL contain no Ground_Truth content such as expected conclusions, affected SNs or expected verification outcomes.
@@ -406,7 +406,7 @@ Dependencies:
 1. THE Clean_Clone_Script SHALL clone the Repository (default: the local repository at its current HEAD commit; optionally a URL given as the first argument) into a new temporary directory and run `make setup`, `make seed` and `make test-fast` there without a `.env` file.
 2. THE Clean_Clone_Script SHALL print the cloned commit hash and the result of each step, exit with a non-zero status if any step fails, and print the temporary directory path when it keeps it for inspection after a failure.
 3. THE Clean_Clone_Script SHALL warn that uncommitted changes in the working tree are not part of the clone.
-4. THE README or the Dev_Log SHALL document the manual follow-up: in the clean clone, create `.env` with a valid key, run `docker compose up --build`, and complete the Scenario A path of the Demo_Script at `http://localhost:8080`.
+4. THE README or the Dev_Log SHALL document the manual follow-up: in the clean clone, create `.env` with a valid key, run `docker compose up --build`, and complete the Scenario A path of the Demo_Script at `http://localhost:18473`.
 5. WHEN the clean-clone verification (scripted and manual parts) is performed, THE Dev_Log SHALL record its date, the commit hash, the result of each step and any problem found.
 6. WHERE the optional CI_Workflow is implemented (priority P1), THE CI_Workflow SHALL run on push and pull request on `ubuntu-latest` with Python 3.11, uv and Node 20, and SHALL run `make setup`, `make seed`, `make test-fast` and `make check-submission`.
 7. WHERE the optional CI_Workflow is implemented, THE CI_Workflow SHALL reference no repository secret and SHALL run no LLM_Test.
