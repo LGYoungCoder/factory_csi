@@ -5,7 +5,7 @@
 - **Repository:** https://github.com/LGYoungCoder/factory_csi
 - **Video:** `<youtube-url>`
 - **App URL:** `<app-url>` (local demo: `make docker-up` → http://localhost:18473)
-- **Built with:** kiro, python, fastapi, langgraph, litellm, deepseek, model-context-protocol, scipy, pandas, sqlite, sqlalchemy, react, typescript, vite, tailwindcss, echarts, docker
+- **Built with (25 tags):** kiro, python, fastapi, langgraph, litellm, deepseek, mcp, pydantic, sqlalchemy, sqlite, scipy, numpy, pandas, react, typescript, vite, tailwindcss, echarts, tanstack-query, radix-ui, docker, nginx, pytest, vitest, uv
 
 Use the English text for the form. The Chinese version is for reference and local presentations.
 
