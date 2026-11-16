@@ -63,3 +63,9 @@ Real entries only, appended at the end of each phase.
 - Added the metric "verification evidence cited by the final hypotheses" next to "verification that changed a support level". The latter is low when a verification confirms an already HIGH hypothesis, which is expected.
 - Final `make eval` (deepseek-flash, 9 runs): all completed; anomaly detection, conclusion acceptability and report completeness 9/9; citation validity 1.0; proposal legality 1.0; verification outcomes match ground truth 1.0; about 55–85 s and about US$0.011–0.013 per case. Scenario C concludes "suspected product mix shift, MEDIUM", which the answer key allows (≤ MEDIUM).
 - Docker backend rebuilt with these fixes; stack healthy on :8080.
+
+## 2026-11-16 – Chinese UI (i18n)
+- On user request, added a lightweight i18n layer (no new dependency): `frontend/src/i18n.tsx` with about 130 Chinese strings, an EN / 中文 toggle in the top bar (stored in localStorage) and a `?lang=zh` URL override.
+- Scenario labels, descriptions and equipment-status reason codes from the API are translated in the UI. AI-generated text and the report body stay English, because the overclaim and citation guardrails are tuned for English.
+- A Vitest test scans every component and page for literal `t("…")` keys and fails on any key missing from the Chinese dictionary. It now has 11 frontend tests.
+- Pushed the repository to GitHub. The remote's initial commit (MIT LICENSE, copyright "KIffer") was merged without force-pushing, and its LICENSE was kept.

@@ -23,7 +23,7 @@ describe("live event reducer", () => {
     s = liveReducer(s, ev(3, "awaiting_approval", {}));
     expect(s.currentStep).toBe(6);
     s = liveReducer(s, ev(4, "citation_dropped", { item: "x", invalid_ids: ["EV-999"] }));
-    expect(s.warnings[0]).toContain("EV-999");
+    expect(s.warnings[0].detail).toContain("EV-999");
     s = liveReducer(s, ev(5, "audit", { name: "tool_call_rejected" }));
     expect(s.audit).toHaveLength(1);
     s = liveReducer(s, ev(6, "something_new", {})); // unknown type ignored without error

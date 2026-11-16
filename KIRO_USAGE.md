@@ -48,4 +48,4 @@ This file lists only what actually happened. The chronological record is in [doc
   - FastAPI body models defined in a closure were treated as query params;
   - LLM output exceeded a schema limit, which exercised the FAILED_LLM → retry-from-checkpoint path;
   - ds-02 test selection included passing products.
-- The working build covers the simulator, MCP server, agent, API, UI, Docker and evaluation. It has 66 deterministic tests, 8 frontend tests and 4 real-LLM tests, all passing at the time of writing.
+- The working build covers the simulator, MCP server, agent, API, UI, Docker and evaluation. It has 66 deterministic tests, 11 frontend tests and 4 real-LLM tests, all passing at the time of writing.

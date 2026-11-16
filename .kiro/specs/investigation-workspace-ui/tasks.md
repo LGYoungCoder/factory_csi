@@ -14,3 +14,6 @@
   - _Requirements: 19_
 - [x] 7. Module tests, typecheck, lint, manual E2E checklist
   - _Requirements: 22_
+- [x] 8. Chinese UI (added after the initial scope, on user request)
+  - `src/i18n.tsx` dictionary + `useI18n()`, EN / 中文 toggle persisted in localStorage, `?lang=zh` URL override; scenario labels and status reasons translated in the UI; AI-generated text and report body stay English.
+  - Test: every literal `t("…")` key in components/pages has a Chinese entry.

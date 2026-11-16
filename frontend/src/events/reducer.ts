@@ -30,7 +30,7 @@ export type LiveState = {
   maxStep: number;
   status: string | null;
   finished: boolean;
-  warnings: string[];
+  warnings: { key: string; detail: string }[];
   audit: CaseEvent[];
 };
 
@@ -79,13 +79,13 @@ export function liveReducer(state: LiveState, action: LiveAction): LiveState {
       }
       break;
     case "citation_dropped":
-      next.warnings = [...state.warnings, `Dropped invalid citation(s) ${(p.invalid_ids as string[] | undefined)?.join(", ") ?? ""} in ${String(p.item)}`];
+      next.warnings = [...state.warnings, { key: "Dropped invalid citation(s)", detail: `${(p.invalid_ids as string[] | undefined)?.join(", ") ?? ""} · ${String(p.item)}` }];
       break;
     case "budget_exhausted":
-      next.warnings = [...state.warnings, `Budget exhausted: ${String(p.budget)}`];
+      next.warnings = [...state.warnings, { key: "Budget exhausted", detail: String(p.budget) }];
       break;
     case "proposal_rejected_by_validator":
-      next.warnings = [...state.warnings, `A proposal was rejected by the validator: ${String(p.reason)}`];
+      next.warnings = [...state.warnings, { key: "A proposal was rejected by the validator", detail: String(p.reason) }];
       break;
     case "audit":
       next.audit = [...state.audit, e];

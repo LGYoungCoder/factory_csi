@@ -74,6 +74,10 @@ make dev-backend    # terminal 1: http://127.0.0.1:8000 (API docs at /api/docs)
 make dev-frontend   # terminal 2: http://localhost:5173
 ```
 
+The UI is available in **English and Simplified Chinese** (EN / 中文 switch in the top bar, or `?lang=zh` in the URL). AI-generated text (hypotheses, rationales, report narrative) is produced in English.
+
+![Workspace in Chinese](docs/screenshots/workspace-zh.png)
+
 Demo path: choose **Scenario A** → **Reset dataset** → **Start Investigation** → watch MCP calls and evidence → **Approve Verification** on the cross retest → see the judgment change → **Conclude** → **Open report** (download Markdown or print to PDF).
 
 ## Configuring the LLM
@@ -84,7 +88,7 @@ Demo path: choose **Scenario A** → **Reset dataset** → **Start Investigation
 
 | Command | What it runs |
 |---|---|
-| `make test-fast` | 66 deterministic pytest tests (simulator, MCP over real stdio, backend logic, API), import contracts, 8 Vitest tests, TypeScript check. No key or network needed. |
+| `make test-fast` | 66 deterministic pytest tests (simulator, MCP over real stdio, backend logic, API), import contracts, 11 Vitest tests, TypeScript check. No key or network needed. |
 | `make test` | The above plus 4 real-LLM investigation tests (`tests/llm`, a few cents) |
 | `make eval` | The [evaluation harness](docs/evaluation.md): N real investigations per scenario scored against the hidden ground truth |
 | `make check-submission` | Pre-submission compliance checklist |

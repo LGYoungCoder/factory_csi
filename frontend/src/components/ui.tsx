@@ -3,6 +3,7 @@ import * as RTooltip from "@radix-ui/react-tooltip";
 import { X } from "lucide-react";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/i18n";
 
 type Variant = "primary" | "secondary" | "ghost" | "danger" | "success";
 const VARIANT: Record<Variant, string> = {
@@ -82,6 +83,7 @@ export function Drawer({ open, onOpenChange, title, children }: { open: boolean;
 export function Confirm({
   open, onOpenChange, title, body, confirmLabel, onConfirm, variant = "danger",
 }: { open: boolean; onOpenChange: (o: boolean) => void; title: string; body: ReactNode; confirmLabel: string; onConfirm: () => void; variant?: Variant }) {
+  const { t } = useI18n();
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
@@ -93,7 +95,7 @@ export function Confirm({
           </Dialog.Description>
           <div className="flex justify-end gap-2">
             <Dialog.Close asChild>
-              <Button variant="ghost">Cancel</Button>
+              <Button variant="ghost">{t("Cancel")}</Button>
             </Dialog.Close>
             <Button variant={variant} onClick={() => { onConfirm(); onOpenChange(false); }}>{confirmLabel}</Button>
           </div>
