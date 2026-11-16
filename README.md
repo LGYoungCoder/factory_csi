@@ -1,5 +1,9 @@
 # Factory CSI – AI Manufacturing Quality Investigation Copilot
 
+**English** · [简体中文](README.zh-CN.md)
+
+> An AI copilot for factory quality incidents: it gathers evidence across MES, equipment and test systems via MCP, proposes the next best check, and revises its verdict once an engineer approves.
+
 **Kiroween 2026 · Category: Frankenstein.** Factory CSI stitches together industrial data systems (MES, equipment monitoring, EOL test), the Model Context Protocol, deterministic statistical quality analytics, an LLM agent and human-in-the-loop verification. Starting from one quality anomaly, it collects cross-system evidence, proposes **what to verify next**, runs that check after an engineer approves it, revises its judgment, and writes a traceable report.
 
 > Everything runs on a fictional factory (Factory Alpha, Line A) with generated data. Verifications are simulated. Results are decision support, not certified root causes.
@@ -85,6 +89,27 @@ Demo path: choose **Scenario A** → **Reset dataset** → **Start Investigation
 ## Configuring the LLM
 
 `LLM_MODEL` is a [LiteLLM](https://docs.litellm.ai/) model string, so switching provider means editing `.env` only. `.env.example` has ready-made blocks for DeepSeek, OpenAI, Gemini, Qwen (DashScope), OpenRouter and Ollama. Default: `deepseek/deepseek-flash` with thinking disabled. One investigation takes about 15–20 LLM calls, roughly 60–100 s and about US$0.01–0.02.
+
+## About the project
+
+**Inspiration.** When an EOL tester's failure rate jumps from 2 % to 18 %, the hard part is deciding whether the parts are bad, the tester is drifting, or the product mix changed. The evidence for that decision is spread across separate MES, equipment and test systems. A confident wrong verdict scraps good parts or ships bad ones. We wanted an assistant that also says *what to check next* and changes its mind when the evidence says so.
+
+**How we built it.**
+- Kiro spec-driven development: 7 specs with 144 EARS requirements and a cross-spec consistency pass.
+- Steering rules and three hooks: tests on save, typecheck on save, secret guard.
+- A seed-reproducible simulator whose answer key the agent cannot import.
+- An Industrial MCP Server and a LangGraph agent with `interrupt()` approvals.
+- Code-enforced guardrails: citations, support levels, mechanism evidence, budgets, and no fallback text.
+
+**Challenges.**
+- Designing scenarios that are detectable yet genuinely ambiguous.
+- Stopping the LLM from rating a hypothesis Medium without evidence of its mechanism. This was fixed in code after the first evaluation.
+- Building on MCP SDK 2.x and LangGraph 1.x.
+- Real bugs found by real runs, such as an SSE stream that never closed.
+
+**What we learned.** Let code compute and the model interpret. "Run this check next, and here is what each result would mean" is more useful than "the root cause is X".
+
+The full story, including the maths, is in [docs/submission.md](docs/submission.md), in English and Chinese.
 
 ## Tests and evaluation
 
