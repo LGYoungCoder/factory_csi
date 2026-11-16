@@ -61,7 +61,7 @@ make docker-up                # = docker compose up --build
 open http://localhost:18473
 ```
 
-The web port defaults to **18473**; set `CSI_WEB_PORT` (in the shell or `.env`) to use another one.
+Default ports: web UI **18473**, backend API **18474** (both bound to 127.0.0.1). Override them with `CSI_WEB_PORT` / `CSI_API_PORT` in the shell or `.env`.
 
 The backend generates the four datasets on first start. Without a key the app still runs: overview and statistics work, and AI investigation is disabled.
 
@@ -72,7 +72,7 @@ If Docker Hub, PyPI or npm are slow where you are, you can override the base ima
 ```bash
 make setup          # uv sync + npm ci  (needs uv, Node ≥ 20)
 make seed           # generate data/ds-00..ds-03
-make dev-backend    # terminal 1: http://127.0.0.1:8000 (API docs at /api/docs)
+make dev-backend    # terminal 1: http://127.0.0.1:18474 (API docs at /api/docs)
 make dev-frontend   # terminal 2: http://localhost:5173
 ```
 

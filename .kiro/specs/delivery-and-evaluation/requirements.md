@@ -23,7 +23,7 @@ Out of scope:
 Assumptions:
 - The LICENSE copyright holder is "Liu Gan" and the copyright year is 2026.
 - Raw evaluation results (`evaluation/results/<timestamp>.json`) are git-ignored. Only `evaluation/results/latest-summary.json` and `docs/evaluation.md` are committed, so the repository shows the latest evaluation without accumulating raw run data.
-- The Frontend_Image is published on `127.0.0.1:18473` and the Backend_Image on `127.0.0.1:8000`, because the MVP has no authentication and calls a paid LLM. Binding to a public interface is part of the deferred deployment.
+- The Frontend_Image is published on `127.0.0.1:18473` and the Backend_Image on `127.0.0.1:18474`, because the MVP has no authentication and calls a paid LLM. Binding to a public interface is part of the deferred deployment.
 - The JSON that Kiro passes on STDIN to a PostFileSave command hook contains the saved file path. The exact field name is confirmed against the Kiro hook documentation during implementation. Every Hook_Script also accepts the path as its first command-line argument, for manual runs and tests.
 - Kiro may not surface the output of a PostFileSave command hook. Each Hook_Script therefore writes its full output to `logs/hooks/<hook-name>.log` and prints a one-line summary (Requirement 7 criterion 10), so results stay visible if Kiro does not show them.
 - The per-Case investigation budgets are 40 LLM calls (not 25) and 20 MCP tool calls, as enforced by the investigation-engine spec. The Evaluation_Harness and the documentation use these values.
@@ -137,7 +137,7 @@ Dependencies:
 1. THE Frontend_App SHALL be a Vite, React and TypeScript project in `frontend/` with TypeScript `strict` mode enabled, Tailwind CSS configured, shadcn/ui initialized (a committed `components.json`), ESLint configured for TypeScript and React, and Vitest configured.
 2. THE Repository SHALL contain `frontend/package-lock.json`, and `npm ci` in `frontend/` SHALL install the dependencies from it and exit with status 0.
 3. THE `frontend/package.json` SHALL define the scripts `dev`, `build`, `preview`, `typecheck` (TypeScript check without emitting files), `lint` (ESLint over the project) and `test` (Vitest in single-run mode), and SHALL declare Node 20 or later in its `engines` field.
-4. WHEN a developer runs `npm run dev` in `frontend/`, THE Frontend_App SHALL serve on `http://localhost:5173` and SHALL proxy every request whose path starts with `/api` to `http://127.0.0.1:8000` without buffering Server-Sent Events.
+4. WHEN a developer runs `npm run dev` in `frontend/`, THE Frontend_App SHALL serve on `http://localhost:5173` and SHALL proxy every request whose path starts with `/api` to `http://127.0.0.1:18474` without buffering Server-Sent Events.
 5. THE Frontend_App SHALL call the backend only through relative `/api` paths, so that the same build works behind the Vite proxy and behind the Frontend_Image proxy.
 6. THE repository foundation SHALL include one Vitest smoke test in `frontend/`, so that `npm run test` finds at least one test and exits with status 0 before the UI spec adds tests.
 
@@ -156,7 +156,7 @@ Dependencies:
 7. IF an LLM_Test runs while the LLM_Health_Status is not OK, THEN THE test suite SHALL fail that test with a message naming the LLM_Health_Status and the sanitized reason, and SHALL NOT skip it silently.
 8. WHEN a developer runs `make lint`, THE Makefile SHALL run `ruff check .`, the Frontend_App `lint` script and the Frontend_App `typecheck` script, and exit with a non-zero status if any of them reports an error.
 9. WHEN a developer runs `make eval`, THE Makefile SHALL run `uv run python -m evaluation` and SHALL pass the optional make variables `RUNS` and `DATASETS` to the `--runs` and `--datasets` options.
-10. THE `dev-backend` target SHALL run `uv run uvicorn backend.api.app:app --reload --host 127.0.0.1 --port 8000`, and the `dev-frontend` target SHALL run the Frontend_App `dev` script. THE README SHALL document both as long-running commands that the developer starts in separate terminals.
+10. THE `dev-backend` target SHALL run `uv run uvicorn backend.api.app:app --reload --host 127.0.0.1 --port 18474`, and the `dev-frontend` target SHALL run the Frontend_App `dev` script. THE README SHALL document both as long-running commands that the developer starts in separate terminals.
 11. WHEN a developer runs `make docker-up`, THE Makefile SHALL run `docker compose up --build`. IF `.env` does not exist, THEN THE Makefile SHALL print the instruction `cp .env.example .env` and exit with a non-zero status without starting containers.
 12. WHEN a developer runs `make check-submission`, THE Makefile SHALL run the Submission_Checker and return its exit status.
 
@@ -268,9 +268,9 @@ Dependencies:
 3. WHEN a Backend_Image container starts, THE Entrypoint SHALL check each Dataset_ID `ds-00`, `ds-01`, `ds-02` and `ds-03` in DATA_DIR, and for each Dataset whose directory lacks any of `factory.db`, `world_state.json` or `ground_truth.json`, SHALL run `python -m simulator generate` with the matching scenario and the Scenario_Registry default seed, producing all three artifacts.
 4. THE Entrypoint SHALL leave every complete Dataset unchanged, so that container restarts keep the existing Datasets and their verification-origin records.
 5. IF Dataset generation fails, THEN THE Entrypoint SHALL print the failing Dataset_ID and exit with a non-zero status without starting the API.
-6. WHEN all Datasets are complete, THE Entrypoint SHALL start uvicorn with `backend.api.app:app` on host `0.0.0.0` and port 8000 as the container's main process, so that it receives stop signals.
+6. WHEN all Datasets are complete, THE Entrypoint SHALL start uvicorn with `backend.api.app:app` on host `0.0.0.0` and port 18474 as the container's main process, so that it receives stop signals.
 7. THE Frontend_Image SHALL build the Frontend_App in a Node 20 build stage with `npm ci` and `npm run build`, and SHALL serve the build output from an `nginx:alpine` stage.
-8. THE Frontend_Image nginx configuration SHALL return `index.html` for every non-file path outside `/api/` (SPA history fallback), and SHALL proxy `/api/` to `http://backend:8000` with HTTP/1.1, `proxy_buffering off`, `proxy_cache off` and `proxy_read_timeout` of at least 3600 seconds, so that Server-Sent Events stream without delay or early disconnect.
+8. THE Frontend_Image nginx configuration SHALL return `index.html` for every non-file path outside `/api/` (SPA history fallback), and SHALL proxy `/api/` to `http://backend:18474` with HTTP/1.1, `proxy_buffering off`, `proxy_cache off` and `proxy_read_timeout` of at least 3600 seconds, so that Server-Sent Events stream without delay or early disconnect.
 9. THE Backend_Image and the Frontend_Image SHALL contain no Secret_Value; the LLM API key SHALL reach the backend container only at run time through the Compose_Stack environment.
 
 ### Requirement 11: Compose Stack
@@ -280,10 +280,10 @@ Dependencies:
 #### Acceptance Criteria
 
 1. THE Compose_Stack SHALL define exactly two services, `backend` (Backend_Image) and `frontend` (Frontend_Image), each with `restart: unless-stopped`.
-2. THE Compose_Stack SHALL publish the frontend service on `127.0.0.1:18473` (container port 80), and SHALL publish the backend service only on `127.0.0.1:8000`.
-3. THE Compose_Stack SHALL load `.env` into the backend service with `env_file`, and SHALL set in the backend service environment HOST `0.0.0.0`, PORT `8000`, DATA_DIR `/app/data`, APP_DB_PATH `/app/var/app.db`, CHECKPOINT_DB_PATH `/app/var/checkpoints.db` and LOG_DIR `/app/logs`, which take precedence over `.env`.
+2. THE Compose_Stack SHALL publish the frontend service on `127.0.0.1:18473` (container port 80), and SHALL publish the backend service only on `127.0.0.1:18474`.
+3. THE Compose_Stack SHALL load `.env` into the backend service with `env_file`, and SHALL set in the backend service environment HOST `0.0.0.0`, PORT `18474`, DATA_DIR `/app/data`, APP_DB_PATH `/app/var/app.db`, CHECKPOINT_DB_PATH `/app/var/checkpoints.db` and LOG_DIR `/app/logs`, which take precedence over `.env`.
 4. THE Compose_Stack SHALL mount three named volumes on the backend service at `/app/data`, `/app/var` and `/app/logs`, so that Datasets, the App_DB and logs survive container recreation.
-5. THE Compose_Stack SHALL define a backend healthcheck that requests `http://127.0.0.1:8000/api/health` using the Python standard library, with a start period of at least 120 seconds to cover first-start Dataset generation, and the frontend service SHALL depend on the backend service with condition `service_healthy`.
+5. THE Compose_Stack SHALL define a backend healthcheck that requests `http://127.0.0.1:18474/api/health` using the Python standard library, with a start period of at least 120 seconds to cover first-start Dataset generation, and the frontend service SHALL depend on the backend service with condition `service_healthy`.
 6. WHEN a user runs `docker compose up --build` in a clean clone with a `.env` that contains a valid LLM key, THE Compose_Stack SHALL serve a working app at `http://localhost:18473` on which the Scenario A demo path of the Demo_Script can be completed.
 7. WHEN a user runs `docker compose up --build` with a `.env` whose LLM_API_KEY is empty, THE Compose_Stack SHALL start both services, the UI SHALL show the LLM as unavailable with investigation disabled, and the scenario list and Dataset overview SHALL work.
 8. THE Compose_Stack SHALL define no service, port or setting that requires a public host name, so that a later deployment can add HTTPS and a public bind address without changing the images.

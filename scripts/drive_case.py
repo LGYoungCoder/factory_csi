@@ -1,6 +1,6 @@
 """Dev helper: run one investigation through the HTTP API, auto-approving the rank-1 proposal.
 
-Usage: uv run python scripts/drive_case.py ds-01 [--base http://127.0.0.1:8000] [--reset]
+Usage: uv run python scripts/drive_case.py ds-01 [--base http://127.0.0.1:18474] [--reset]
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ import httpx
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("dataset")
-    ap.add_argument("--base", default="http://127.0.0.1:8000")
+    ap.add_argument("--base", default="http://127.0.0.1:18474")
     ap.add_argument("--reset", action="store_true")
     ap.add_argument("--timeout", type=float, default=600)
     a = ap.parse_args()

@@ -1,4 +1,5 @@
 SHELL := /bin/bash
+API_PORT ?= 18474
 RUNS ?= 3
 DATASETS ?= ds-01,ds-02,ds-03
 
@@ -39,7 +40,7 @@ eval: ## Evaluation harness with real LLM (RUNS=3 DATASETS=ds-01,ds-02,ds-03)
 	uv run python -m evaluation --runs $(RUNS) --datasets $(DATASETS)
 
 dev-backend: ## Run backend with reload (long-running, own terminal)
-	uv run uvicorn backend.api.app:app --reload --host 127.0.0.1 --port 8000
+	uv run uvicorn backend.api.app:app --reload --host 127.0.0.1 --port $(API_PORT)
 
 dev-frontend: ## Run Vite dev server on :5173 (long-running, own terminal)
 	cd frontend && npm run dev

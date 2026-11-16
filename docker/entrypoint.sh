@@ -8,4 +8,4 @@ for pair in baseline:ds-00 a:ds-01 b:ds-02 c:ds-03; do
     python -m simulator generate --scenario "$key" --out "$DATA_DIR"
   fi
 done
-exec uvicorn backend.api.app:app --host "${HOST:-0.0.0.0}" --port "${PORT:-8000}"
+exec uvicorn backend.api.app:app --host "${HOST:-0.0.0.0}" --port "${PORT:-18474}"

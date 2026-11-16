@@ -189,4 +189,4 @@ React 18 + TS + Vite + Tailwind + shadcn/ui-style components + ECharts + TanStac
 
 ## 11. Delivery
 
-`docker compose up --build` → frontend nginx on `127.0.0.1:18473` (proxies `/api`, SSE unbuffered), backend on `127.0.0.1:8000`; backend entrypoint generates missing datasets. `make test-fast` (no LLM), `make test` (real LLM), `make eval`, `make check-submission`.
+`docker compose up --build` → frontend nginx on `127.0.0.1:18473` (proxies `/api`, SSE unbuffered), backend on `127.0.0.1:18474`; backend entrypoint generates missing datasets. `make test-fast` (no LLM), `make test` (real LLM), `make eval`, `make check-submission`.

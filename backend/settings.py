@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     log_dir: Path = Path("logs")
     cors_origins: str = "http://localhost:5173"
     host: str = "127.0.0.1"
-    port: int = Field(default=8000, ge=1, le=65535)
+    port: int = Field(default=18474, ge=1, le=65535)
 
     # investigation budgets
     case_max_mcp_calls: int = 20

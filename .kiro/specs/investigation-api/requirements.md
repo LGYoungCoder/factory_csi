@@ -120,7 +120,7 @@ Dependencies:
 
 #### Acceptance Criteria
 
-1. THE App_Settings SHALL load each setting from an environment variable of the same name, then from a `.env` file in the working directory, then from these defaults: DATA_DIR `./data`, APP_DB_PATH `./var/app.db`, CHECKPOINT_DB_PATH `./var/checkpoints.db`, LOG_DIR `./logs`, CORS_ORIGINS `http://localhost:5173`, HOST `127.0.0.1` and PORT `8000`. An environment variable SHALL take precedence over the `.env` file.
+1. THE App_Settings SHALL load each setting from an environment variable of the same name, then from a `.env` file in the working directory, then from these defaults: DATA_DIR `./data`, APP_DB_PATH `./var/app.db`, CHECKPOINT_DB_PATH `./var/checkpoints.db`, LOG_DIR `./logs`, CORS_ORIGINS `http://localhost:5173`, HOST `127.0.0.1` and PORT `18474`. An environment variable SHALL take precedence over the `.env` file.
 2. THE App_Settings SHALL parse CORS_ORIGINS as a comma-separated list of origins, trimming whitespace around each entry and ignoring empty entries.
 3. IF PORT is not an integer from 1 to 65535, CORS_ORIGINS contains the entry `*`, or HOST is an empty string, THEN THE Investigation_API SHALL refuse to start and SHALL write an error to standard error that names the invalid setting without printing any Secret_Value.
 4. WHEN the Investigation_API starts, THE Investigation_API SHALL create the parent directories of APP_DB_PATH and CHECKPOINT_DB_PATH and the LOG_DIR directory if they do not exist.

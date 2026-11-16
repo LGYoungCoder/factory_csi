@@ -17,8 +17,8 @@ RUN uv sync --frozen --no-dev && useradd --create-home --uid 10001 app \
     && mkdir -p /app/data /app/var /app/logs && chown -R app /app/data /app/var /app/logs && chmod +x docker/entrypoint.sh
 USER app
 ENV PATH=/app/.venv/bin:$PATH DATA_DIR=/app/data APP_DB_PATH=/app/var/app.db CHECKPOINT_DB_PATH=/app/var/checkpoints.db \
-    LOG_DIR=/app/logs HOST=0.0.0.0 PORT=8000
-EXPOSE 8000
+    LOG_DIR=/app/logs HOST=0.0.0.0 PORT=18474
+EXPOSE 18474
 HEALTHCHECK --interval=15s --timeout=5s --start-period=120s --retries=5 \
-  CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=4).status == 200 else 1)"
+  CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:18474/api/health', timeout=4).status == 200 else 1)"
 ENTRYPOINT ["/app/docker/entrypoint.sh"]
